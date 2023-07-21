@@ -1,7 +1,7 @@
 {
     "name": "alleyinteractive/wp-plugin-loader",
     "description": "Code-enabled WordPress plugin loading",
-    "type": "wordpress-plugin",
+    "type": "library",
     "keywords": [
         "alleyinteractive",
         "wp-plugin-loader"
@@ -20,7 +20,6 @@
     },
     "require-dev": {
         "alleyinteractive/alley-coding-standards": "^1.0",
-        "mantle-framework/testkit": "^0.11",
         "szepeviktor/phpstan-wordpress": "^1.1"
     },
     "config": {
@@ -31,27 +30,20 @@
         },
         "sort-packages": true
     },
-    "extra": {
-        "wordpress-autoloader": {
-            "autoload": {
-                "Alley\\WP\\WP_Plugin_Loader": "src"
-            },
-            "autoload-dev": {
-                "Alley\\WP\\WP_Plugin_Loader\\Tests": "tests"
-            }
-        }
+    "autoload": {
+        "files": [
+            "src/class-wp-plugin-loader.php"
+        ]
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
     "scripts": {
         "phpcbf": "phpcbf .",
         "phpcs": "phpcs .",
-        "phpunit": "phpunit",
         "phpstan": "phpstan --memory-limit=512M",
         "test": [
             "@phpcs",
-            "@phpstan",
-            "@phpunit"
+            "@phpstan"
         ]
     }
 }

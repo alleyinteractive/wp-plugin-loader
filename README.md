@@ -4,7 +4,7 @@ Code-enabled WordPress plugin loading.
 
 ## Installation
 
-You can install the package via composer:
+You can install the package via Composer:
 
 ```bash
 composer require alleyinteractive/wp-plugin-loader

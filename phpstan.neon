@@ -5,11 +5,11 @@ parameters:
 	# Level 9 is the highest level
 	level: max
 
+	scanFiles:
+		- stubs/constants.stub
+
 	paths:
-		- blocks/
-		- entries/
 		- src/
-		- wp-plugin-loader.php
 
 #    ignoreErrors:
 #        - '#PHPDoc tag @var#'
