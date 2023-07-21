@@ -1,16 +1,16 @@
 <?php
 /**
- * Create WordPress Plugin Tests: Base Test Class
+ * WP Plugin Loader Tests: Base Test Class
  *
- * @package create-wordpress-plugin
+ * @package wp-plugin-loader
  */
 
-namespace Create_WordPress_Plugin\Tests;
+namespace Alley\WP\WP_Plugin_Loader\Tests;
 
 use Mantle\Testkit\Test_Case as TestkitTest_Case;
 
 /**
- * Create WordPress Plugin Base Test Case
+ * WP Plugin Loader Base Test Case
  */
 abstract class Test_Case extends TestkitTest_Case {
 

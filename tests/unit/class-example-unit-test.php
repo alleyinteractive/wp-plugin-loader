@@ -1,11 +1,11 @@
 <?php
 /**
- * Create WordPress Plugin Tests: Example Unit Test
+ * WP Plugin Loader Tests: Example Unit Test
  *
- * @package create-wordpress-plugin
+ * @package wp-plugin-loader
  */
 
-namespace Create_WordPress_Plugin\Tests\Unit;
+namespace Alley\WP\WP_Plugin_Loader\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 
