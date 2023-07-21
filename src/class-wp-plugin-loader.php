@@ -48,6 +48,8 @@ class WP_Plugin_Loader {
 	/**
 	 * Prevent any plugin activations for non-code activated plugins.
 	 *
+	 * @todo Harden with a capability check.
+	 *
 	 * @param bool $prevent Whether to prevent activations.
 	 */
 	public function prevent_activations( bool $prevent = true ): void {
