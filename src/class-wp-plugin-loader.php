@@ -43,6 +43,7 @@ class WP_Plugin_Loader {
 		add_filter( 'plugin_action_links', [ $this, 'filter_plugin_action_links' ], 10, 2 );
 		add_filter( 'option_active_plugins', [ $this, 'filter_option_active_plugins' ] );
 		add_filter( 'pre_update_option_active_plugins', [ $this, 'filter_pre_update_option_active_plugins' ] );
+		add_filter( 'map_meta_cap', [ $this, 'prevent_plugin_activation' ], 10, 2 );
 	}
 
 	/**
@@ -188,5 +189,20 @@ class WP_Plugin_Loader {
 	protected function sanitize_plugin_name( string $folder ): string {
 		$folder = preg_replace( '#([^a-zA-Z0-9-_.]+)#', '', $folder );
 		return str_replace( '..', '', (string) $folder ); // To prevent going up directories.
+	}
+
+	/**
+	 * Prevent any plugin activations for non-code activated plugins.
+	 *
+	 * @param array<string> $caps Array of capabilities.
+	 * @param string        $cap Capability name.
+	 * @return array<string>
+	 */
+	public function prevent_plugin_activation( $caps, $cap ) {
+		if ( $this->prevent_activations && 'activate_plugins' === $cap ) {
+			return [ 'do_not_allow' ];
+		}
+
+		return $caps;
 	}
 }
