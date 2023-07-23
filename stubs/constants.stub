@@ -1,0 +1,3 @@
+<?php
+define( 'WP_CONTENT_DIR', 'wp-content' );
+define( 'WP_PLUGIN_DIR', 'wp-content/plugins' );
