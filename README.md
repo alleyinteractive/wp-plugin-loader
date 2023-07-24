@@ -30,6 +30,13 @@ the main plugin file from and load.
 
 See [APCu Caching](#apcu-caching) for more information on caching.
 
+### Plugin Directories
+
+Out of the box, the package will attempt to load your plugin from
+`wp-content/plugins`. When it is found, the package will attempt to load your
+plugin from `wp-content/client-mu-plugins`. For non-WordPress VIP sites, the
+plugin will also load plugins from `wp-content/mu-plugins`.
+
 ### Preventing Activations
 
 The package supports preventing activations of plugins via the plugins screen
@@ -46,19 +53,16 @@ capability check.
 
 ### APCu Caching
 
-When a plugin is loaded by a folder name the package will attempt to determine
-the main plugin file from the folder. This can be a semi-expensive operation
-that can be cached with APCu. To enable caching, call `enable_caching()` or
-`set_cache_prefix( $prefix )` to specify a custom cache prefix.
+When a plugin is loaded by a directory name the package will attempt to
+determine the main plugin file from the directory. This can be a semi-expensive
+operation that can be cached with APCu. To enable caching, call
+`enable_caching()` or `set_cache_prefix( $prefix )` to specify a custom cache
+prefix.
 
 ```php
 use Alley\WP\WP_Plugin_Loader;
 
 ( new WP_Plugin_Loader( [ ... ] ) )->enable_caching();
-```
-
-```php
-use Alley\WP\WP_Plugin_Loader;
 
 ( new WP_Plugin_Loader( [ ... ] ) )->set_cache_prefix( 'my-prefix' );
 ```
