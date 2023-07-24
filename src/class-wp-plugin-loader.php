@@ -96,14 +96,24 @@ class WP_Plugin_Loader {
 			WP_CONTENT_DIR . '/plugins',
 		];
 
-		// Use the client mu-plugins directory if it exists and the constant
-		// from VIP's mu-plugins is defined.
+		$client_mu_plugins_dir = defined( 'WPCOM_VIP_CLIENT_MU_PLUGIN_DIR' )
+			? WPCOM_VIP_CLIENT_MU_PLUGIN_DIR
+			: ( is_dir( WP_CONTENT_DIR . '/client-mu-plugins' ) ? WP_CONTENT_DIR . '/client-mu-plugins' : null );
+
+		/**
+		 * The client-mu-plugins directory should always be used if the
+		 * directory exists. If the WPCOM_VIP_CLIENT_MU_PLUGIN_DIR constant is
+		 * defined, then we won't add the mu-plugins directory to the list of
+		 * folders. Otherwise, we will add the mu-plugins directory to the list
+		 * of folders.
+		 */
 		if ( defined( 'WPCOM_VIP_CLIENT_MU_PLUGIN_DIR' ) ) {
 			$folders[] = WPCOM_VIP_CLIENT_MU_PLUGIN_DIR;
 		} else {
-			// Add the mu-plugins directory if the client mu-plugins directory
-			// does not exist. We wouldn't want to attempt to load from VIP's
-			// mu-plugins directory if the client mu-plugins directory exists.
+			if ( $client_mu_plugins_dir ) {
+				$folders[] = WP_CONTENT_DIR . '/client-mu-plugins';
+			}
+
 			$folders[] = WP_CONTENT_DIR . '/mu-plugins';
 		}
 
@@ -153,10 +163,10 @@ class WP_Plugin_Loader {
 				];
 
 				// Include the client mu-plugins directory if it exists.
-				if ( defined( 'WPCOM_VIP_CLIENT_MU_PLUGIN_DIR' ) ) {
-					$paths[] = WPCOM_VIP_CLIENT_MU_PLUGIN_DIR . "/$sanitized_plugin/$sanitized_plugin.php";
-					$paths[] = WPCOM_VIP_CLIENT_MU_PLUGIN_DIR . "/$sanitized_plugin/plugin.php";
-					$paths[] = WPCOM_VIP_CLIENT_MU_PLUGIN_DIR . "/$sanitized_plugin.php";
+				if ( $client_mu_plugins_dir ) {
+					$paths[] = "$client_mu_plugins_dir/$sanitized_plugin/$sanitized_plugin.php";
+					$paths[] = "$client_mu_plugins_dir/$sanitized_plugin/plugin.php";
+					$paths[] = "$client_mu_plugins_dir/$sanitized_plugin.php";
 				}
 
 				foreach ( $paths as $path ) {
