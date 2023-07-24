@@ -12,6 +12,13 @@ namespace Alley\WP\WP_Plugin_Loader;
  */
 class WP_Plugin_Loader {
 	/**
+	 * Cache prefix for APCu caching.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $cache_prefix = null;
+
+	/**
 	 * Array of loaded plugins.
 	 *
 	 * @var array<int, string>
@@ -49,34 +56,103 @@ class WP_Plugin_Loader {
 	/**
 	 * Prevent any plugin activations for non-code activated plugins.
 	 *
-	 * @todo Harden with a capability check.
-	 *
 	 * @param bool $prevent Whether to prevent activations.
+	 * @return static
 	 */
-	public function prevent_activations( bool $prevent = true ): void {
+	public function prevent_activations( bool $prevent = true ): static {
 		$this->prevent_activations = $prevent;
+
+		return $this;
+	}
+
+	/**
+	 * Enable APCu caching for plugin paths.
+	 *
+	 * @return static
+	 */
+	public function enable_caching(): static {
+		return $this->set_cache_prefix( 'wp-plugin-loader-' );
+	}
+
+	/**
+	 * Set the cache prefix for APCu caching.
+	 *
+	 * @param string|null $prefix The cache prefix.
+	 * @return static
+	 */
+	public function set_cache_prefix( ?string $prefix ): static {
+		$this->cache_prefix = function_exists( 'apcu_fetch' ) && filter_var( ini_get( 'apc.enabled' ), FILTER_VALIDATE_BOOLEAN )
+			? $prefix
+			: null;
+
+		return $this;
 	}
 
 	/**
 	 * Load the requested plugins.
 	 */
 	protected function load_plugins(): void {
-		$client_mu_plugins = is_dir( WP_CONTENT_DIR . '/client-mu-plugins' );
+		$folders = [
+			WP_CONTENT_DIR . '/plugins',
+		];
 
+		$client_mu_plugins_dir = defined( 'WPCOM_VIP_CLIENT_MU_PLUGIN_DIR' )
+			? WPCOM_VIP_CLIENT_MU_PLUGIN_DIR
+			: ( is_dir( WP_CONTENT_DIR . '/client-mu-plugins' ) ? WP_CONTENT_DIR . '/client-mu-plugins' : null );
+
+		/**
+		 * The client-mu-plugins directory should always be used if the
+		 * directory exists. If the WPCOM_VIP_CLIENT_MU_PLUGIN_DIR constant is
+		 * defined, then we won't add the mu-plugins directory to the list of
+		 * folders. Otherwise, we will add the mu-plugins directory to the list
+		 * of folders.
+		 */
+		if ( defined( 'WPCOM_VIP_CLIENT_MU_PLUGIN_DIR' ) ) {
+			$folders[] = WPCOM_VIP_CLIENT_MU_PLUGIN_DIR;
+		} else {
+			if ( $client_mu_plugins_dir ) {
+				$folders[] = WP_CONTENT_DIR . '/client-mu-plugins';
+			}
+
+			$folders[] = WP_CONTENT_DIR . '/mu-plugins';
+		}
+
+		// Loop through each plugin and attempt to load it.
 		foreach ( $this->plugins as $plugin ) {
-			if ( file_exists( WP_PLUGIN_DIR . "/$plugin" ) && ! is_dir( WP_PLUGIN_DIR . "/$plugin" ) ) {
-				require_once WP_PLUGIN_DIR . "/$plugin";
+			// Loop through each possible folder and attempt to load the plugin
+			// from it.
+			foreach ( $folders as $folder ) {
+				if ( file_exists( $folder . "/$plugin" ) && ! is_dir( $folder . "/$plugin" ) ) {
+					require_once $folder . "/$plugin"; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
 
-				$this->loaded_plugins[] = trim( $plugin, '/' );
+					// Mark the plugin as loaded if it is in the /plugins directory.
+					if ( WP_CONTENT_DIR . '/plugins' === $folder ) {
+						$this->loaded_plugins[] = trim( $plugin, '/' );
+					}
 
-				continue;
-			} elseif ( $client_mu_plugins && file_exists( WP_CONTENT_DIR . "/client-mu-plugins/$plugin" ) && ! is_dir( WP_CONTENT_DIR . "/client-mu-plugins/$plugin" ) ) {
-				$plugin = ltrim( $plugin, '/' );
+					continue 2;
+				}
+			}
 
-				require_once WP_CONTENT_DIR . "/client-mu-plugins/$plugin";
+			// Attempt to locate the plugin by name if it isn't a file.
+			if ( false === strpos( $plugin, '.php' ) ) {
+				// Check the APCu cache if we have a prefix set.
+				if ( $this->cache_prefix ) {
+					$cached_plugin_path = apcu_fetch( $this->cache_prefix . $plugin );
 
-				continue;
-			} elseif ( false === strpos( $plugin, '.php' ) ) {
+					if ( false !== $cached_plugin_path ) {
+						// Check if the plugin path is valid. If it is, require
+						// it. Continue either way if the cache was not false.
+						if ( is_string( $cached_plugin_path ) && ! empty( $cached_plugin_path ) ) {
+							require_once $cached_plugin_path; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
+
+							$this->loaded_plugins[] = trim( substr( $cached_plugin_path, strlen( WP_PLUGIN_DIR ) + 1 ), '/' );
+						}
+
+						continue;
+					}
+				}
+
 				// Attempt to locate the plugin by name if it isn't a file.
 				$sanitized_plugin = $this->sanitize_plugin_name( $plugin );
 
@@ -86,36 +162,54 @@ class WP_Plugin_Loader {
 					WP_PLUGIN_DIR . "/$sanitized_plugin.php",
 				];
 
-				$match = false;
+				// Include the client mu-plugins directory if it exists.
+				if ( $client_mu_plugins_dir ) {
+					$paths[] = "$client_mu_plugins_dir/$sanitized_plugin/$sanitized_plugin.php";
+					$paths[] = "$client_mu_plugins_dir/$sanitized_plugin/plugin.php";
+					$paths[] = "$client_mu_plugins_dir/$sanitized_plugin.php";
+				}
 
 				foreach ( $paths as $path ) {
 					if ( file_exists( $path ) ) {
 						require_once $path; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
 
-						$match = true;
+						// Cache the plugin path in APCu if we have a prefix set.
+						if ( $this->cache_prefix ) {
+							apcu_store( $this->cache_prefix . $plugin, $path );
+						}
 
+
+						// Mark the plugin as loaded if it is in the /plugins directory.
 						$this->loaded_plugins[] = trim( substr( $path, strlen( WP_PLUGIN_DIR ) + 1 ), '/' );
-						break;
+
+						continue 2;
 					}
 				}
-
-				// Bail if we found a match.
-				if ( $match ) {
-					continue;
-				}
 			}
 
-			$error_message = sprintf( 'WP Plugin Loader: Plugin %s not found.', $plugin );
-
-			trigger_error( esc_html( $error_message ), E_USER_WARNING ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_trigger_error
-
-			if ( extension_loaded( 'newrelic' ) && function_exists( 'newrelic_notice_error' ) ) {
-				newrelic_notice_error( $error_message );
-			}
-
-			// Bye bye!
-			die( esc_html( $error_message ) );
+			$this->handle_missing_plugin( $plugin );
 		}
+	}
+
+	/**
+	 * Handle a missing plugin.
+	 *
+	 * @todo Change return type to never when 8.1 is required.
+	 *
+	 * @param string $plugin The plugin name passed to the loader.
+	 * @return void
+	 */
+	protected function handle_missing_plugin( string $plugin ): void {
+		$error_message = sprintf( 'WP Plugin Loader: Plugin %s not found.', $plugin );
+
+		trigger_error( esc_html( $error_message ), E_USER_WARNING ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_trigger_error
+
+		if ( extension_loaded( 'newrelic' ) && function_exists( 'newrelic_notice_error' ) ) {
+			newrelic_notice_error( $error_message );
+		}
+
+		// Bye bye!
+		die( esc_html( $error_message ) );
 	}
 
 	/**
