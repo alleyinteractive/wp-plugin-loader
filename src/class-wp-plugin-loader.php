@@ -98,7 +98,7 @@ class WP_Plugin_Loader {
 
 		// Use the client mu-plugins directory if it exists and the constant
 		// from VIP's mu-plugins is defined.
-		if ( defined( WPCOM_VIP_CLIENT_MU_PLUGIN_DIR ) ) {
+		if ( defined( 'WPCOM_VIP_CLIENT_MU_PLUGIN_DIR' ) ) {
 			$folders[] = WPCOM_VIP_CLIENT_MU_PLUGIN_DIR;
 		} else {
 			// Add the mu-plugins directory if the client mu-plugins directory
@@ -113,7 +113,7 @@ class WP_Plugin_Loader {
 			// from it.
 			foreach ( $folders as $folder ) {
 				if ( file_exists( $folder . "/$plugin" ) && ! is_dir( $folder . "/$plugin" ) ) {
-					require_once $folder . "/$plugin";
+					require_once $folder . "/$plugin"; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
 
 					// Mark the plugin as loaded if it is in the /plugins directory.
 					if ( WP_CONTENT_DIR . '/plugins' === $folder ) {
@@ -153,7 +153,7 @@ class WP_Plugin_Loader {
 				];
 
 				// Include the client mu-plugins directory if it exists.
-				if ( defined( WPCOM_VIP_CLIENT_MU_PLUGIN_DIR ) ) {
+				if ( defined( 'WPCOM_VIP_CLIENT_MU_PLUGIN_DIR' ) ) {
 					$paths[] = WPCOM_VIP_CLIENT_MU_PLUGIN_DIR . "/$sanitized_plugin/$sanitized_plugin.php";
 					$paths[] = WPCOM_VIP_CLIENT_MU_PLUGIN_DIR . "/$sanitized_plugin/plugin.php";
 					$paths[] = WPCOM_VIP_CLIENT_MU_PLUGIN_DIR . "/$sanitized_plugin.php";
