@@ -93,60 +93,45 @@ class WP_Plugin_Loader {
 	 */
 	protected function load_plugins(): void {
 		$folders = [
-			WP_CONTENT_DIR . '/plugins',
+			WP_PLUGIN_DIR,
+			defined( 'WPCOM_VIP_CLIENT_MU_PLUGIN_DIR' ) ? WPCOM_VIP_CLIENT_MU_PLUGIN_DIR : WP_CONTENT_DIR . '/client-mu-plugins',
 		];
 
-		$client_mu_plugins_dir = defined( 'WPCOM_VIP_CLIENT_MU_PLUGIN_DIR' )
-			? WPCOM_VIP_CLIENT_MU_PLUGIN_DIR
-			: ( is_dir( WP_CONTENT_DIR . '/client-mu-plugins' ) ? WP_CONTENT_DIR . '/client-mu-plugins' : null );
-
-		/**
-		 * The client-mu-plugins directory should always be used if the
-		 * directory exists. If the WPCOM_VIP_CLIENT_MU_PLUGIN_DIR constant is
-		 * defined, then we won't add the mu-plugins directory to the list of
-		 * folders. Otherwise, we will add the mu-plugins directory to the list
-		 * of folders.
-		 */
-		if ( defined( 'WPCOM_VIP_CLIENT_MU_PLUGIN_DIR' ) ) {
-			$folders[] = WPCOM_VIP_CLIENT_MU_PLUGIN_DIR;
-		} else {
-			if ( $client_mu_plugins_dir ) {
-				$folders[] = WP_CONTENT_DIR . '/client-mu-plugins';
-			}
-
-			$folders[] = WP_CONTENT_DIR . '/mu-plugins';
+		// Include the mu-plugins directory if it exists and we're not on a
+		// WordPress VIP environment.
+		if ( is_dir( WPMU_PLUGIN_DIR ) && ( ! defined( 'WPCOM_IS_VIP_ENV' ) || ! WPCOM_IS_VIP_ENV ) ) {
+			$folders[] = WPMU_PLUGIN_DIR;
 		}
+
+		$folders = array_filter( $folders, 'is_dir' );
 
 		// Loop through each plugin and attempt to load it.
 		foreach ( $this->plugins as $plugin ) {
-			// Loop through each possible folder and attempt to load the plugin
-			// from it.
-			foreach ( $folders as $folder ) {
-				if ( file_exists( $folder . "/$plugin" ) && ! is_dir( $folder . "/$plugin" ) ) {
-					require_once $folder . "/$plugin"; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
+			$is_file = str_ends_with( $plugin, '.php' );
 
-					// Mark the plugin as loaded if it is in the /plugins directory.
-					if ( WP_CONTENT_DIR . '/plugins' === $folder ) {
-						$this->loaded_plugins[] = trim( $plugin, '/' );
+			// If the plugin is a potential file, loop through each possible
+			// folder and attempt to load the plugin from it.
+			if ( $is_file ) {
+				foreach ( $folders as $folder ) {
+					if ( file_exists( "$folder/$plugin" ) && ! is_dir( "$folder/$plugin" ) ) {
+						$this->handle_plugin_path( "$folder/$plugin" );
+
+						continue 2;
 					}
-
-					continue 2;
 				}
-			}
+			} else {
+				// Attempt to locate the plugin by name if it isn't a file.
+				$sanitized_plugin = $this->sanitize_plugin_name( $plugin );
 
-			// Attempt to locate the plugin by name if it isn't a file.
-			if ( false === strpos( $plugin, '.php' ) ) {
 				// Check the APCu cache if we have a prefix set.
 				if ( $this->cache_prefix ) {
-					$cached_plugin_path = apcu_fetch( $this->cache_prefix . $plugin );
+					$cached_plugin_path = apcu_fetch( $this->cache_prefix . $sanitized_plugin );
 
 					if ( false !== $cached_plugin_path ) {
 						// Check if the plugin path is valid. If it is, require
 						// it. Continue either way if the cache was not false.
 						if ( is_string( $cached_plugin_path ) && ! empty( $cached_plugin_path ) ) {
-							require_once $cached_plugin_path; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
-
-							$this->loaded_plugins[] = trim( substr( $cached_plugin_path, strlen( WP_PLUGIN_DIR ) + 1 ), '/' );
+							$this->handle_plugin_path( $cached_plugin_path );
 						}
 
 						continue;
@@ -154,33 +139,23 @@ class WP_Plugin_Loader {
 				}
 
 				// Attempt to locate the plugin by name if it isn't a file.
-				$sanitized_plugin = $this->sanitize_plugin_name( $plugin );
+				// Compile a list of possible paths to check for the plugin.
+				$paths = [];
 
-				$paths = [
-					WP_PLUGIN_DIR . "/$sanitized_plugin/$sanitized_plugin.php",
-					WP_PLUGIN_DIR . "/$sanitized_plugin/plugin.php",
-					WP_PLUGIN_DIR . "/$sanitized_plugin.php",
-				];
-
-				// Include the client mu-plugins directory if it exists.
-				if ( $client_mu_plugins_dir ) {
-					$paths[] = "$client_mu_plugins_dir/$sanitized_plugin/$sanitized_plugin.php";
-					$paths[] = "$client_mu_plugins_dir/$sanitized_plugin/plugin.php";
-					$paths[] = "$client_mu_plugins_dir/$sanitized_plugin.php";
+				foreach ( $folders as $folder ) {
+					$paths[] = "$folder/$sanitized_plugin/$sanitized_plugin.php";
+					$paths[] = "$folder/$sanitized_plugin/plugin.php";
+					$paths[] = "$folder/$sanitized_plugin.php";
 				}
 
 				foreach ( $paths as $path ) {
 					if ( file_exists( $path ) ) {
-						require_once $path; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
+						$this->handle_plugin_path( $path );
 
 						// Cache the plugin path in APCu if we have a prefix set.
 						if ( $this->cache_prefix ) {
-							apcu_store( $this->cache_prefix . $plugin, $path );
+							apcu_store( $this->cache_prefix . $sanitized_plugin, $path );
 						}
-
-
-						// Mark the plugin as loaded if it is in the /plugins directory.
-						$this->loaded_plugins[] = trim( substr( $path, strlen( WP_PLUGIN_DIR ) + 1 ), '/' );
 
 						continue 2;
 					}
@@ -188,6 +163,21 @@ class WP_Plugin_Loader {
 			}
 
 			$this->handle_missing_plugin( $plugin );
+		}
+	}
+
+	/**
+	 * Load a plugin by file path.
+	 *
+	 * @param string $path The path to the plugin file.
+	 * @return void
+	 */
+	protected function handle_plugin_path( string $path ): void {
+		require_once $path; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
+
+		// Mark the plugin as loaded if it is in the /plugins directory.
+		if ( 0 === strpos( $path, WP_PLUGIN_DIR ) ) {
+			$this->loaded_plugins[] = trim( substr( $path, strlen( WP_PLUGIN_DIR ) + 1 ), '/' );
 		}
 	}
 
