@@ -15,7 +15,7 @@ composer require alleyinteractive/wp-plugin-loader
 Load the package via Composer and use it like so:
 
 ```php
-use Alley\WP\WP_Plugin_Loader;
+use Alley\WP\WP_Plugin_Loader\WP_Plugin_Loader;
 
 new WP_Plugin_Loader( [
 	'plugin/plugin.php',
@@ -43,7 +43,7 @@ The package supports preventing activations of plugins via the plugins screen
 (useful to fully lock down the plugins enabled on site):
 
 ```php
-use Alley\WP\WP_Plugin_Loader;
+use Alley\WP\WP_Plugin_Loader\WP_Plugin_Loader;
 
 ( new WP_Plugin_Loader( [ ... ] )->prevent_activations();
 ```
@@ -60,7 +60,7 @@ operation that can be cached with APCu. To enable caching, call
 prefix.
 
 ```php
-use Alley\WP\WP_Plugin_Loader;
+use Alley\WP\WP_Plugin_Loader\WP_Plugin_Loader;
 
 ( new WP_Plugin_Loader( [ ... ] ) )->enable_caching();
 
