@@ -19,7 +19,7 @@
         "alleyinteractive/composer-wordpress-autoloader": "^1.0"
     },
     "require-dev": {
-        "alleyinteractive/alley-coding-standards": "^1.0",
+        "alleyinteractive/alley-coding-standards": "^2.0",
         "szepeviktor/phpstan-wordpress": "^1.1"
     },
     "config": {
