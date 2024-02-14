@@ -5,7 +5,7 @@
  * @package wp-plugin-loader
  */
 
-namespace Alley\WP\WP_Plugin_Loader;
+namespace Alley\WP;
 
 /**
  * WordPress Plugin Loader
@@ -290,3 +290,6 @@ class WP_Plugin_Loader {
 		return $caps;
 	}
 }
+
+// Include an alias for legacy references to the former class namespace.
+class_alias( WP_Plugin_Loader::class, 'Alley\WP\WP_Plugin_Loader\WP_Plugin_Loader' );
