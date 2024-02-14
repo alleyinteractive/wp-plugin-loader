@@ -146,6 +146,24 @@ class WP_Plugin_Loader {
 					$paths[] = "$folder/$sanitized_plugin/$sanitized_plugin.php";
 					$paths[] = "$folder/$sanitized_plugin/plugin.php";
 					$paths[] = "$folder/$sanitized_plugin.php";
+
+					if ( 0 === strpos( $sanitized_plugin, 'wordpress-' ) ) {
+						$paths[] = "$folder/" . substr( $sanitized_plugin, 10 ) . "/$sanitized_plugin.php";
+					} elseif ( 0 === strpos( $sanitized_plugin, 'wp-' ) ) {
+						$paths[] = "$folder/" . substr( $sanitized_plugin, 3 ) . "/$sanitized_plugin.php";
+					}
+
+					// Plugin-specific exceptions that don't follow the standard pattern.
+					$paths = array_merge(
+						$paths,
+						(array) match ( $sanitized_plugin ) {
+							'logger' => [ "$folder/logger/ai-logger.php" ],
+							'shortcake' => [ "$folder/shortcake/dev.php" ],
+							'vip-decoupled-bundle' => [ "$folder/vip-decoupled-bundle/vip-decoupled.php" ],
+							'wp-updates-notifier' => [ "$folder/wp-updates-notifier/class-sc-wp-updates-notifier.php" ],
+							default => [],
+						},
+					);
 				}
 
 				foreach ( $paths as $path ) {
