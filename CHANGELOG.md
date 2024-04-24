@@ -2,6 +2,10 @@
 
 All notable changes to `WP Plugin Loader` will be documented in this file.
 
+## 0.1.4 - 2024-04-24
+
+- Fix to actually allow caching to be enabled.
+
 ## 0.1.3 - 2024-02-14
 
 - Changes class from `Alley\WP\WP_Plugin_Loader\WP_Plugin_Loader` to

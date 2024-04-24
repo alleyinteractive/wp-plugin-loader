@@ -36,13 +36,18 @@ class WP_Plugin_Loader {
 	 * Constructor.
 	 *
 	 * @param array<int, string> $plugins Array of plugins to load.
+	 * @param string|bool        $cache Whether to enable caching with an optional prefix.
 	 */
-	public function __construct( public array $plugins = [] ) {
+	public function __construct( public array $plugins = [], string|bool $cache = false ) {
 		if ( did_action( 'plugins_loaded' ) ) {
 			trigger_error( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_trigger_error
 				'WP_Plugin_Loader should be instantiated before the plugins_loaded hook.',
 				E_USER_WARNING
 			);
+		}
+
+		if ( $cache ) {
+			$this->enable_caching( true === $cache ? null : (string) $cache );
 		}
 
 		$this->load_plugins();
@@ -68,10 +73,11 @@ class WP_Plugin_Loader {
 	/**
 	 * Enable APCu caching for plugin paths.
 	 *
+	 * @param string $prefix The cache prefix, defaults to 'wp-plugin-loader-'.
 	 * @return static
 	 */
-	public function enable_caching(): static {
-		return $this->set_cache_prefix( 'wp-plugin-loader-' );
+	public function enable_caching( ?string $prefix = null ): static {
+		return $this->set_cache_prefix( $prefix ?? 'wp-plugin-loader-' );
 	}
 
 	/**
