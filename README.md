@@ -55,16 +55,15 @@ capability check.
 
 When a plugin is loaded by a directory name the package will attempt to
 determine the main plugin file from the directory. This can be a semi-expensive
-operation that can be cached with APCu. To enable caching, call
-`enable_caching()` or `set_cache_prefix( $prefix )` to specify a custom cache
-prefix.
+operation that can be cached with APCu. To enable caching, pass `$cache` to the
+constructor with a boolean or string prefix:
 
 ```php
 use Alley\WP\WP_Plugin_Loader;
 
-( new WP_Plugin_Loader( [ ... ] ) )->enable_caching();
+new WP_Plugin_Loader( plugins: [ ... ], cache: true );
 
-( new WP_Plugin_Loader( [ ... ] ) )->set_cache_prefix( 'my-prefix' );
+new WP_Plugin_Loader( plugins: [ ... ], cache: 'my-prefix' );
 ```
 
 Note: caching will only be enabled if APCu is available.
