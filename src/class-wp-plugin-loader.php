@@ -77,7 +77,7 @@ class WP_Plugin_Loader {
 	 * @return static
 	 */
 	public function enable_caching( ?string $prefix = null ): static {
-		return $this->set_cache_prefix( $prefix ?? 'wp-plugin-loader-' );
+		return $this->set_cache_prefix( $prefix ?? 'wpl-' . basename( ABSPATH ) . '-' );
 	}
 
 	/**

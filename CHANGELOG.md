@@ -2,6 +2,11 @@
 
 All notable changes to `WP Plugin Loader` will be documented in this file.
 
+## 0.1.5 - 2024-09-25
+
+- Ensure that the default cache key is unique to each installation. Previously
+  caching could be polluted across different installations on the same server.
+
 ## 0.1.4 - 2024-04-24
 
 - Fix to actually allow caching to be enabled.
