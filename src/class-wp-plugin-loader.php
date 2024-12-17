@@ -261,7 +261,7 @@ class WP_Plugin_Loader {
 	/**
 	 * Filters the list of active plugins to include the ones we loaded via code.
 	 *
-	 * @param array<int, string> $value The existing list of active plugins.
+	 * @param array<int, string>|mixed $value The existing list of active plugins.
 	 * @return array<int, string>
 	 */
 	public function filter_option_active_plugins( $value ): array {
@@ -273,13 +273,13 @@ class WP_Plugin_Loader {
 
 		sort( $value );
 
-		return $value;
+		return $value; // @phpstan-ignore-line should return
 	}
 
 	/**
 	 * Exclude code-active plugins from the database option.
 	 *
-	 * @param array<int, string> $value The saved list of active plugins.
+	 * @param array<int, string>|mixed $value The saved list of active plugins.
 	 * @return array<int, string>
 	 */
 	public function filter_pre_update_option_active_plugins( $value ) {
@@ -291,7 +291,7 @@ class WP_Plugin_Loader {
 
 		sort( $value );
 
-		return $value;
+		return $value; // @phpstan-ignore-line should return
 	}
 
 	/**
