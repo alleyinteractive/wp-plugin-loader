@@ -222,8 +222,14 @@ class WP_Plugin_Loader {
 			newrelic_notice_error( $error_message );
 		}
 
-		// Bye bye!
-		die( esc_html( $error_message ) );
+		// Send a 500 status code and no-cache headers to prevent caching of the error message.
+		if ( ! headers_sent() ) {
+			status_header( 500 );
+			nocache_headers();
+		}
+
+		echo esc_html( $error_message );
+		exit( 1 );
 	}
 
 	/**

@@ -2,6 +2,11 @@
 
 All notable changes to `WP Plugin Loader` will be documented in this file.
 
+## 0.1.6 - 2024-12-17
+
+- When a plugin is not found, exit with a status code of 1 and send a `500`
+  status code header. This will prevent a fatal error from being cached
+
 ## 0.1.5 - 2024-09-25
 
 - Ensure that the default cache key is unique to each installation. Previously
