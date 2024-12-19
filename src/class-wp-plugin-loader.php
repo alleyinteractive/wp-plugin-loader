@@ -265,7 +265,7 @@ class WP_Plugin_Loader {
 	 * @return array<int, string>
 	 */
 	public function filter_option_active_plugins( $value ): array {
-		if ( ! is_array( $value ) ) {
+		if ( ! is_array( $value ) ) { // @phpstan-ignore-line to true
 			$value = [];
 		}
 
@@ -283,7 +283,7 @@ class WP_Plugin_Loader {
 	 * @return array<int, string>
 	 */
 	public function filter_pre_update_option_active_plugins( $value ) {
-		if ( ! is_array( $value ) ) {
+		if ( ! is_array( $value ) ) { // @phpstan-ignore-line to true
 			$value = [];
 		}
 
