@@ -2,6 +2,10 @@
 
 All notable changes to `WP Plugin Loader` will be documented in this file.
 
+## 0.2.0 - 2025-02-26
+
+- Globalize variables after including the plugin file.
+
 ## 0.1.6 - 2024-12-17
 
 - When a plugin is not found, exit with a status code of 1 and send a `500`
