@@ -197,7 +197,7 @@ class WP_Plugin_Loader {
 	 * @return void
 	 */
 	protected function handle_plugin_path( string $path ): void {
-		// What follows is a copy of _wpcom_vip_include_plugin().
+		// What follows is mostly a copy of _wpcom_vip_include_plugin().
 
 		// Start by marking down the currently defined variables (so we can exclude them later).
 		$pre_include_variables = get_defined_vars();
