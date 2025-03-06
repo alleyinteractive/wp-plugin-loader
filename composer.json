@@ -15,11 +15,12 @@
         }
     ],
     "require": {
-        "php": "^8.0",
+        "php": "^8.1",
         "alleyinteractive/composer-wordpress-autoloader": "^1.0"
     },
     "require-dev": {
         "alleyinteractive/alley-coding-standards": "^2.0",
+        "mantle-framework/testkit": "^1.5",
         "szepeviktor/phpstan-wordpress": "^1.1"
     },
     "config": {
@@ -41,9 +42,11 @@
         "phpcbf": "phpcbf .",
         "phpcs": "phpcs .",
         "phpstan": "phpstan --memory-limit=512M",
+        "phpunit": "phpunit",
         "test": [
             "@phpcs",
-            "@phpstan"
+            "@phpstan",
+            "@phpunit"
         ]
     }
 }

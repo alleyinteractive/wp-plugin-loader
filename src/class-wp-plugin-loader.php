@@ -7,6 +7,9 @@
 
 namespace Alley\WP;
 
+use Closure;
+use InvalidArgumentException;
+
 /**
  * WordPress Plugin Loader
  */
@@ -33,13 +36,28 @@ class WP_Plugin_Loader {
 	protected bool $prevent_activations = false;
 
 	/**
+	 * Create a new instance of the plugin loader with fluent method chaining.
+	 *
+	 * When calling this method, you can chain additional methods to configure
+	 * the loader. When you are done you must call the `load()` method to load
+	 * the plugins.
+	 *
+	 * @param array<int, string> $plugins Array of plugins to load.
+	 * @return self
+	 */
+	public static function create( array $plugins = [] ): self {
+		return new self( plugins: $plugins, fluent: true );
+	}
+
+	/**
 	 * Constructor.
 	 *
 	 * @param array<int, string> $plugins Array of plugins to load.
 	 * @param string|bool        $cache Whether to enable caching with an optional prefix.
+	 * @param bool               $fluent Whether to use fluent method chaining.
 	 */
-	public function __construct( public array $plugins = [], string|bool $cache = false ) {
-		if ( did_action( 'plugins_loaded' ) ) {
+	public function __construct( public array $plugins = [], string|bool $cache = false, protected bool $fluent = false ) {
+		if ( did_action( 'plugins_loaded' ) && ( ! defined( 'MANTLE_IS_TESTING' ) || ! MANTLE_IS_TESTING ) ) {
 			trigger_error( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_trigger_error
 				'WP_Plugin_Loader should be instantiated before the plugins_loaded hook.',
 				E_USER_WARNING
@@ -50,12 +68,9 @@ class WP_Plugin_Loader {
 			$this->enable_caching( true === $cache ? null : (string) $cache );
 		}
 
-		$this->load_plugins();
-
-		add_filter( 'plugin_action_links', [ $this, 'filter_plugin_action_links' ], 10, 2 );
-		add_filter( 'option_active_plugins', [ $this, 'filter_option_active_plugins' ] );
-		add_filter( 'pre_update_option_active_plugins', [ $this, 'filter_pre_update_option_active_plugins' ] );
-		add_filter( 'map_meta_cap', [ $this, 'prevent_plugin_activation' ], 10, 2 );
+		if ( ! $this->fluent ) {
+			$this->load();
+		}
 	}
 
 	/**
@@ -95,9 +110,61 @@ class WP_Plugin_Loader {
 	}
 
 	/**
+	 * Add a plugin to the list of plugins to load.
+	 *
+	 * @param array<int, string>|string $plugin The plugin to load or an array of plugins.
+	 * @return static
+	 */
+	public function add( array|string $plugin ): static {
+		if ( is_array( $plugin ) ) {
+			$this->plugins = array_merge( $this->plugins, $plugin );
+		} else {
+			$this->plugins[] = $plugin;
+		}
+
+		return $this;
+	}
+
+	/**
+	 * Conditionally add a plugin to the list of plugins to load.
+	 *
+	 * @throws InvalidArgumentException If fluent method chaining is not enabled.
+	 *
+	 * @param Closure                   $callback The callback to determine if the plugin should be loaded.
+	 * @param array<int, string>|string $plugin The plugin to load or an array of plugins.
+	 * @return static
+	 */
+	public function when( Closure $callback, array|string $plugin ): static {
+		if ( ! $this->fluent ) {
+			throw new InvalidArgumentException( 'The when() method can only be used when fluent method chaining is enabled. Call WP_Plugin_Loader::create() instead of new WP_Plugin_Loader().' );
+		}
+
+		if ( $callback() ) {
+			$this->add( $plugin );
+		}
+
+		return $this;
+	}
+
+	/**
+	 * Load the configured plugins.
+	 */
+	public function load(): void {
+		$this->load_plugins();
+
+		add_filter( 'plugin_action_links', [ $this, 'filter_plugin_action_links' ], 10, 2 );
+		add_filter( 'option_active_plugins', [ $this, 'filter_option_active_plugins' ] );
+		add_filter( 'pre_update_option_active_plugins', [ $this, 'filter_pre_update_option_active_plugins' ] );
+		add_filter( 'map_meta_cap', [ $this, 'prevent_plugin_activation' ], 10, 2 );
+	}
+
+	/**
 	 * Load the requested plugins.
 	 */
 	protected function load_plugins(): void {
+		// Ensure all plugins are unique.
+		$this->plugins = array_unique( $this->plugins );
+
 		$folders = [
 			WP_PLUGIN_DIR,
 			defined( 'WPCOM_VIP_CLIENT_MU_PLUGIN_DIR' ) ? WPCOM_VIP_CLIENT_MU_PLUGIN_DIR : WP_CONTENT_DIR . '/client-mu-plugins',
