@@ -2,6 +2,16 @@
 
 All notable changes to `WP Plugin Loader` will be documented in this file.
 
+## 1.0.0 - 2025-03-07
+
+Stable release 🎊.
+
+### Added
+
+- Added `WP_Plugin_Loader::create()` method to allow for a more fluent API. Optional.
+- Added `WP_Plugin_Loader::when()` method to allow for conditional loading of plugins.
+- Added tests for the package.
+
 ## 0.2.1 - 2025-03-07
 
 - Add `when()` method to allow for conditional loading of plugins.

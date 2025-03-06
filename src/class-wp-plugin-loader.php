@@ -130,16 +130,16 @@ class WP_Plugin_Loader {
 	 *
 	 * @throws InvalidArgumentException If fluent method chaining is not enabled.
 	 *
-	 * @param Closure                   $callback The callback to determine if the plugin should be loaded.
+	 * @param Closure                   $condition The callback to determine if the plugin should be loaded.
 	 * @param array<int, string>|string $plugin The plugin to load or an array of plugins.
 	 * @return static
 	 */
-	public function when( Closure $callback, array|string $plugin ): static {
+	public function when( Closure $condition, array|string $plugin ): static {
 		if ( ! $this->fluent ) {
 			throw new InvalidArgumentException( 'The when() method can only be used when fluent method chaining is enabled. Call WP_Plugin_Loader::create() instead of new WP_Plugin_Loader().' );
 		}
 
-		if ( $callback() ) {
+		if ( $condition() ) {
 			$this->add( $plugin );
 		}
 
