@@ -12,10 +12,6 @@ Stable release 🎊.
 - Added `WP_Plugin_Loader::when()` method to allow for conditional loading of plugins.
 - Added tests for the package.
 
-## 0.2.1 - 2025-03-07
-
-- Add `when()` method to allow for conditional loading of plugins.
-
 ## 0.2.0 - 2025-02-26
 
 - Globalize variables after including the plugin file.

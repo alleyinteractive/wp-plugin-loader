@@ -264,7 +264,32 @@ class WP_Plugin_Loader {
 	 * @return void
 	 */
 	protected function handle_plugin_path( string $path ): void {
+		// What follows is mostly a copy of _wpcom_vip_include_plugin().
+
+		// Start by marking down the currently defined variables (so we can exclude them later).
+		$pre_include_variables = get_defined_vars();
+
+		// Support symlinks.
+		wp_register_plugin_realpath( $path );
+
+		// Now include.
 		require_once $path; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
+
+		// Disallow some global variables.
+		$disallowed_globals = [
+			'blacklist'             => 0,
+			'pre_include_variables' => 0,
+			'new_variables'         => 0,
+			'helper_file'           => 0,
+		];
+
+		// Let's find out what's new by comparing the current variables to the previous ones.
+		$new_variables = array_diff_key( get_defined_vars(), $GLOBALS, $disallowed_globals, $pre_include_variables );
+
+		// Globalize each new variable.
+		foreach ( $new_variables as $new_variable => $value ) {
+			$GLOBALS[ $new_variable ] = $value; // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
+		}
 
 		// Mark the plugin as loaded if it is in the /plugins directory.
 		if ( 0 === strpos( $path, WP_PLUGIN_DIR ) ) {
@@ -332,7 +357,7 @@ class WP_Plugin_Loader {
 	 * @return array<int, string>
 	 */
 	public function filter_option_active_plugins( $value ): array {
-		if ( ! is_array( $value ) ) {
+		if ( ! is_array( $value ) ) { // @phpstan-ignore-line to true
 			$value = [];
 		}
 
@@ -350,7 +375,7 @@ class WP_Plugin_Loader {
 	 * @return array<int, string>
 	 */
 	public function filter_pre_update_option_active_plugins( $value ) {
-		if ( ! is_array( $value ) ) {
+		if ( ! is_array( $value ) ) { // @phpstan-ignore-line to true
 			$value = [];
 		}
 
