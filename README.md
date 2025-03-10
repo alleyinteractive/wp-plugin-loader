@@ -30,6 +30,50 @@ the main plugin file from and load.
 
 See [APCu Caching](#apcu-caching) for more information on caching.
 
+### Fluent Loading
+
+The package supports a fluent API for loading plugins with the `create()` method:
+
+```php
+use Alley\WP\WP_Plugin_Loader;
+
+WP_Plugin_Loader::create()
+	->add( 'plugin/plugin.php' )
+	->add( [
+		'plugin-name-without-file',
+		'another-plugin',
+	] )
+	->load();
+```
+
+You can also use the `when()` method to conditionally load plugins:
+
+```php
+use Alley\WP\WP_Plugin_Loader;
+
+WP_Plugin_Loader::create()
+	->add( 'plugin/plugin.php' )
+	->when( fn () => 'production' !== wp_get_environment_type(), 'logger' )
+	->load();
+```
+
+This pairs nicely with named arguments:
+
+```php
+use Alley\WP\WP_Plugin_Loader;
+
+WP_Plugin_Loader::create()
+	->add( 'plugin/plugin.php' )
+	->when(
+		condition: fn () => 'production' !== wp_get_environment_type(),
+		plugin: 'logger',
+	)
+	->load();
+```
+
+When using fluent loading you must call the `load()` method to load the plugins
+at the end of the chain.
+
 ### Plugin Directories
 
 Out of the box, the package will attempt to load your plugin from
