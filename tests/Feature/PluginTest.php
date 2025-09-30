@@ -64,7 +64,7 @@ class PluginTest extends Test_Case {
 	 */
 	public function test_it_uses_doing_it_wrong_after_plugins_loaded(): void {
 		// Simulate that plugins_loaded has already fired.
-		do_action( 'plugins_loaded' );
+		do_action( 'plugins_loaded' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 		$this->expectApplied( 'doing_it_wrong_run' )
 			->once()
