@@ -58,9 +58,10 @@ class WP_Plugin_Loader {
 	 */
 	public function __construct( public array $plugins = [], string|bool $cache = false, protected bool $fluent = false ) {
 		if ( did_action( 'plugins_loaded' ) && ( ! defined( 'MANTLE_IS_TESTING' ) || ! MANTLE_IS_TESTING ) ) {
-			trigger_error( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_trigger_error
+			_doing_it_wrong(
+				__CLASS__,
 				'WP_Plugin_Loader should be instantiated before the plugins_loaded hook.',
-				E_USER_WARNING
+				''
 			);
 		}
 

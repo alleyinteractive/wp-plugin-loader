@@ -58,4 +58,22 @@ class PluginTest extends Test_Case {
 
 		$this->assertTrue( class_exists( \Alley\WP\Modified_Date_Control\Modified_Date_Feature::class ) );
 	}
+
+	/**
+	 * Test that _doing_it_wrong() is called when instantiated after plugins_loaded.
+	 */
+	public function test_it_uses_doing_it_wrong_after_plugins_loaded(): void {
+		// Simulate that plugins_loaded has already fired.
+		do_action( 'plugins_loaded' );
+
+		$this->expectApplied( 'doing_it_wrong_run' )
+			->once()
+			->with(
+				\Mockery::type( 'string' ),
+				'WP_Plugin_Loader should be instantiated before the plugins_loaded hook.',
+				\Mockery::type( 'string' )
+			);
+
+		new WP_Plugin_Loader( [] );
+	}
 }
