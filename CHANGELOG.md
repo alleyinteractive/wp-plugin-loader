@@ -2,6 +2,13 @@
 
 All notable changes to `WP Plugin Loader` will be documented in this file.
 
+## 1.0.1
+
+### Changed
+
+- Use `_doing_it_wrong()` to warn if the class is instantiated after the
+  `plugins_loaded` hook has fired. Previously this was a triggered error.
+
 ## 1.0.0 - 2025-03-07
 
 Stable release 🎊.

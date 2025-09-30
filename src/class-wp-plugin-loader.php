@@ -57,13 +57,6 @@ class WP_Plugin_Loader {
 	 * @param bool               $fluent Whether to use fluent method chaining.
 	 */
 	public function __construct( public array $plugins = [], string|bool $cache = false, protected bool $fluent = false ) {
-		if ( did_action( 'plugins_loaded' ) && ( ! defined( 'MANTLE_IS_TESTING' ) || ! MANTLE_IS_TESTING ) ) {
-			trigger_error( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_trigger_error
-				'WP_Plugin_Loader should be instantiated before the plugins_loaded hook.',
-				E_USER_WARNING
-			);
-		}
-
 		if ( $cache ) {
 			$this->enable_caching( true === $cache ? null : (string) $cache );
 		}
@@ -150,6 +143,14 @@ class WP_Plugin_Loader {
 	 * Load the configured plugins.
 	 */
 	public function load(): void {
+		if ( did_action( 'plugins_loaded' ) && ( ! defined( 'MANTLE_IS_TESTING' ) || ! MANTLE_IS_TESTING ) ) {
+			_doing_it_wrong(
+				__CLASS__,
+				'WP_Plugin_Loader should be instantiated before the plugins_loaded hook.',
+				''
+			);
+		}
+
 		$this->load_plugins();
 
 		add_filter( 'plugin_action_links', [ $this, 'filter_plugin_action_links' ], 10, 2 );
@@ -339,7 +340,7 @@ class WP_Plugin_Loader {
 			unset( $actions['deactivate'] );
 			$actions['wp-plugin-loader-code-activated-plugin'] = __( 'Enabled via code', 'wp-plugin-loader' );
 
-			if ( $screen && is_a( $screen, 'WP_Screen' ) && 'plugins' === $screen->id ) {
+			if ( $screen && is_a( $screen, 'WP_Screen' ) && 'plugins' === $screen->id ) { // @phpstan-ignore-line function.alreadyNarrowedType
 				unset( $actions['network_active'] );
 			}
 		} elseif ( $this->prevent_activations ) {
